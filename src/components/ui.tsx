@@ -309,3 +309,31 @@ export function BigNumber({
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* 折りたたみ                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 既定では畳んでおきたい補足情報の入れ物。
+ * <details> をそのまま使い、開閉状態はブラウザに任せる（JSの状態を持たない）。
+ */
+export function Disclosure({
+  summary,
+  children,
+  defaultOpen = false,
+}: {
+  summary: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details className="disclosure" open={defaultOpen}>
+      <summary className="disclosure__summary">
+        <span className="disclosure__marker" aria-hidden="true" />
+        {summary}
+      </summary>
+      <div className="disclosure__body">{children}</div>
+    </details>
+  );
+}

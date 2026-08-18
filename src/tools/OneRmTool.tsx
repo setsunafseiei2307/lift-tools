@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { NumberField, Segmented, Panel, EmptyState, BigNumber, CopyButton, Note } from '../components/ui';
+import { NumberField, Segmented, Panel, EmptyState, BigNumber, CopyButton, Note, Disclosure } from '../components/ui';
 import { estimateOneRM, repTableFromOneRM, MAX_REPS } from '../lib/onerm';
 import { parseNumber, fmt } from '../lib/format';
 import { usePersistentState } from '../lib/storage';
@@ -102,17 +102,20 @@ export function OneRmTool() {
             <p className="range">
               式によって {fmt(estimate.min)}kg 〜 {fmt(estimate.max)}kg（幅 {fmt(estimate.spread)}kg）
             </p>
-            <ul className="formula-list">
-              {estimate.results.map((r) => (
-                <li key={r.name}>
-                  <span className="formula-list__name">{r.name}</span>
-                  <span className="formula-list__value">{fmt(r.value)}<small>kg</small></span>
-                </li>
-              ))}
-            </ul>
             <Note>
               回数が多いほど誤差が大きくなります。5回以下で測ると精度が上がります。
             </Note>
+            {/* 7式の内訳は普段は不要なので畳んでおく。数字が多いと平均値が埋もれるため */}
+            <Disclosure summary="7つの式それぞれの推定値を見る">
+              <ul className="formula-list formula-list--bare">
+                {estimate.results.map((r) => (
+                  <li key={r.name}>
+                    <span className="formula-list__name">{r.name}</span>
+                    <span className="formula-list__value">{fmt(r.value)}<small>kg</small></span>
+                  </li>
+                ))}
+              </ul>
+            </Disclosure>
           </Panel>
 
           <Panel title="レップ数ごとの目安重量" accent="var(--yellow)">
