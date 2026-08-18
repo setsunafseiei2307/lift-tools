@@ -1,0 +1,34 @@
+# 依存
+node_modules
+
+# ビルド成果物
+dist
+*.tsbuildinfo
+
+# 環境変数・秘密情報
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# エディタ・ツール
+.vscode
+.idea
+.claude
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ログ
+*.log
+npm-debug.log*
+
+# 食品データの再生成で出る中間ファイル（docs/food-data.md 参照）
+scripts/food-data/*.xlsx
+scripts/food-data/all_foods.json
+scripts/food-data/selected_foods.json
+scripts/food-data/food_review.md
+scripts/food-data/__pycache__/
