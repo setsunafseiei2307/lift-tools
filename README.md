@@ -10,7 +10,7 @@
 | プレート計算 | 目標重量に対してバーの片側へ載せるプレートを図で表示する |
 | Smolov | Smolov Jr. / Smolov の4週プログラムを1RMから自動生成する |
 | PFC・カロリー | BMR→TDEE→目標カロリー→PFCを計算し、週あたりの体重変化を出す |
-| 食品検索 | 300食品のカロリー・PFCを引き、指定グラム数に換算する |
+| 食品検索 | 16カテゴリ300食品からカロリー・PFCを引き、指定グラム数に換算する |
 
 ## 技術
 
@@ -18,7 +18,7 @@
 - 状態管理ライブラリなし（useState + localStorage）
 - CSSはカスタムプロパティで設計、ライト/ダークテーマ対応
 - 依存はReactのみ。ビルド成果物 約224KB（gzip 71KB。うち食品データが約50KB）
-- テスト: Vitest（173件）
+- テスト: Vitest（181件）
 
 計算ロジックは `src/lib/` にUIから完全分離してあり、すべて純関数。
 UIを触らずに計算式だけテストできる構成にしている。
@@ -75,14 +75,14 @@ npm run test:watch # 変更を監視
 NaN / Infinity まで含めて検証している。
 
 ```
-✓ src/test/foods.test.ts      (40)
+✓ src/test/foods.test.ts      (48)
 ✓ src/test/nutrition.test.ts  (30)
 ✓ src/test/plates.test.ts     (25)
 ✓ src/test/rpe.test.ts        (21)
 ✓ src/test/onerm.test.ts      (20)
 ✓ src/test/smolov.test.ts     (20)
 ✓ src/test/format.test.ts     (17)
-  Tests  173 passed
+  Tests  181 passed
 ```
 
 ## 設計上の判断

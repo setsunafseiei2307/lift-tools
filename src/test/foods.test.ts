@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   FOODS,
+  categorySummaries,
   findFood,
   foodCategories,
+  foodsInCategory,
   isEstimated,
   normalizeQuery,
   scaleFood,
@@ -255,6 +257,55 @@ describe('scaleFood', () => {
     const naive =
       (hijiki.protein ?? 0) * 4 + (hijiki.fat ?? 0) * 9 + (hijiki.carbs ?? 0) * 4;
     expect(Math.abs(naive - (hijiki.kcal ?? 0))).toBeGreaterThan(50);
+  });
+});
+
+describe('カテゴリ', () => {
+  it('16カテゴリあり、件数の合計が300になる', () => {
+    const cats = categorySummaries();
+    expect(cats).toHaveLength(16);
+    expect(cats.reduce((sum, c) => sum + c.count, 0)).toBe(300);
+  });
+
+  it('件数がその カテゴリの実データと一致する', () => {
+    for (const c of categorySummaries()) {
+      expect(foodsInCategory(c.name)).toHaveLength(c.count);
+    }
+  });
+
+  it('全カテゴリに代表の絵文字がある', () => {
+    const missing = categorySummaries().filter((c) => !c.emoji).map((c) => c.name);
+    expect(missing).toEqual([]);
+  });
+
+  it('foodsInCategory はそのカテゴリの食品だけを返す', () => {
+    const meat = foodsInCategory('肉類');
+    expect(meat).toHaveLength(55);
+    expect(meat.every((f) => f.category === '肉類')).toBe(true);
+  });
+
+  it('存在しないカテゴリは空配列', () => {
+    expect(foodsInCategory('存在しない')).toEqual([]);
+    expect(foodsInCategory('')).toEqual([]);
+  });
+
+  it('カテゴリを指定するとその中だけを検索する（AND）', () => {
+    const all = searchFoods('焼き');
+    const meat = searchFoods('焼き', { category: '肉類' });
+    expect(meat.length).toBeGreaterThan(0);
+    expect(meat.length).toBeLessThan(all.length);
+    expect(meat.every((f) => f.category === '肉類')).toBe(true);
+  });
+
+  it('カテゴリ内に無い語は0件になる（絞り込みが効いている）', () => {
+    expect(searchFoods('まぐろ', { category: '肉類' })).toEqual([]);
+    expect(searchFoods('まぐろ').length).toBeGreaterThan(0);
+  });
+
+  it('category に null / undefined を渡すと全件から検索する', () => {
+    const base = searchFoods('まぐろ').map((f) => f.id);
+    expect(searchFoods('まぐろ', { category: null }).map((f) => f.id)).toEqual(base);
+    expect(searchFoods('まぐろ', { category: undefined }).map((f) => f.id)).toEqual(base);
   });
 });
 

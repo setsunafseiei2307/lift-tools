@@ -144,6 +144,8 @@ function expandQuery(q: string): string[] {
 export interface SearchOptions {
   /** 返す最大件数。既定は50 */
   limit?: number;
+  /** 指定するとそのカテゴリ内だけを検索する */
+  category?: string | null;
 }
 
 /**
@@ -152,6 +154,7 @@ export interface SearchOptions {
  */
 export function searchFoods(query: string, options: SearchOptions = {}): Food[] {
   const limit = options.limit ?? 50;
+  const pool = options.category ? FOODS.filter((f) => f.category === options.category) : FOODS;
   // 空白で区切られていたら、すべてを含む食品だけを返す（AND検索）。
   // 「とり ささみ」のように、表示名と収載名にまたがる語を繋げて打たれても拾えるようにするため。
   const tokens = (query ?? '')
@@ -161,7 +164,7 @@ export function searchFoods(query: string, options: SearchOptions = {}): Food[] 
   if (tokens.length === 0) return [];
 
   const scored: { food: Food; rank: number }[] = [];
-  for (const food of FOODS) {
+  for (const food of pool) {
     const name = normalizeQuery(food.name);
     const hay = HAYSTACKS.get(food.id) ?? '';
 
@@ -216,6 +219,49 @@ export function scaleFood(food: Food, grams: number): ScaledFood | null {
 /** 成分表で推定値だった項目かどうか */
 export function isEstimated(food: Food, key: NutrientKey): boolean {
   return food.estimated?.includes(key) ?? false;
+}
+
+/**
+ * カテゴリを代表する絵文字。一覧から中身を見当づけるための飾りで、
+ * 個々の食品の emoji とは独立に選んでいる。
+ */
+const CATEGORY_EMOJI: Record<string, string> = {
+  '穀類・主食': '🍚',
+  'いも・でん粉': '🥔',
+  '砂糖・甘味': '🍯',
+  '豆類': '🫘',
+  '種実類': '🥜',
+  '野菜類': '🥬',
+  '果実類': '🍎',
+  'きのこ類': '🍄',
+  '藻類': '🍥',
+  '魚介類': '🐟',
+  '肉類': '🥩',
+  '卵類': '🥚',
+  '乳類': '🥛',
+  '油脂類': '🧈',
+  'し好飲料': '🍵',
+  '調味料': '🧂',
+};
+
+export interface CategorySummary {
+  name: string;
+  count: number;
+  emoji: string | null;
+}
+
+/** カテゴリ一覧を件数つきで返す（データに出現する順） */
+export function categorySummaries(): CategorySummary[] {
+  return foodCategories().map((name) => ({
+    name,
+    count: FOODS.filter((f) => f.category === name).length,
+    emoji: CATEGORY_EMOJI[name] ?? null,
+  }));
+}
+
+/** 指定カテゴリの食品をすべて返す */
+export function foodsInCategory(category: string): Food[] {
+  return FOODS.filter((f) => f.category === category);
 }
 
 /** カテゴリの一覧（データに出現する順） */

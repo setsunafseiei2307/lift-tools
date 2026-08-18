@@ -10,7 +10,9 @@ import {
 } from '../components/ui';
 import {
   FOOD_SOURCE,
+  categorySummaries,
   findFood,
+  foodsInCategory,
   isEstimated,
   scaleFood,
   searchFoods,
@@ -23,10 +25,10 @@ import { usePersistentState } from '../lib/storage';
 const RESULT_LIMIT = 40;
 
 /** 絵文字が無い食品でも名前の左端が揃うよう、枠は常に出す */
-function FoodEmoji({ food }: { food: Food }) {
+function FoodEmoji({ emoji }: { emoji: string | null }) {
   return (
-    <span className="food__emoji" aria-hidden={food.emoji ? undefined : true}>
-      {food.emoji ?? ''}
+    <span className="food__emoji" aria-hidden={emoji ? undefined : true}>
+      {emoji ?? ''}
     </span>
   );
 }
@@ -48,12 +50,66 @@ function nutrientLabel(key: NutrientKey): string {
   }
 }
 
+function FoodList({
+  foods,
+  selectedId,
+  onSelect,
+}: {
+  foods: Food[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <ul className="foodlist">
+      {foods.map((food) => (
+        <li key={food.id}>
+          <button
+            type="button"
+            className={`foodrow${food.id === selectedId ? ' is-active' : ''}`}
+            aria-pressed={food.id === selectedId}
+            onClick={() => onSelect(food.id)}
+          >
+            <FoodEmoji emoji={food.emoji} />
+            <span className="foodrow__body">
+              <span className="foodrow__name">{food.name}</span>
+              <span className="foodrow__macro">
+                P {fmt(food.protein, 1)} / F {fmt(food.fat, 1)} / C {fmt(food.carbs, 1)}
+              </span>
+            </span>
+            <span className="foodrow__kcal">
+              {fmtComma(food.kcal)}
+              <small>kcal</small>
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function FoodTool() {
   const [query, setQuery] = usePersistentState('food.query', '');
+  const [category, setCategory] = usePersistentState<string | null>('food.category', null);
   const [selectedId, setSelectedId] = usePersistentState<string | null>('food.selected', null);
   const [grams, setGrams] = usePersistentState('food.grams', '100');
 
-  const results = useMemo(() => searchFoods(query, { limit: RESULT_LIMIT }), [query]);
+  const isSearching = query.trim() !== '';
+  const categories = useMemo(() => categorySummaries(), []);
+
+  // カテゴリを選んでいる間は、その中だけを検索する（AND）。
+  // 0件になったときだけ、全カテゴリへ広げる導線を出す。
+  const results = useMemo(
+    () => (isSearching ? searchFoods(query, { limit: RESULT_LIMIT, category }) : []),
+    [query, category, isSearching],
+  );
+  const wholeDbHits = useMemo(
+    () => (isSearching && category && results.length === 0 ? searchFoods(query, { limit: 1 }).length : 0),
+    [query, category, isSearching, results.length],
+  );
+
+  const categoryFoods = useMemo(() => (category ? foodsInCategory(category) : []), [category]);
+  const currentCategory = categories.find((c) => c.name === category) ?? null;
+
   const selected = selectedId ? findFood(selectedId) : null;
 
   const gramsNum = parseNumber(grams);
@@ -88,45 +144,73 @@ export function FoodTool() {
           value={query}
           onChange={setQuery}
           placeholder="鶏むね / まぐろ / ブロッコリー"
-          hint="ひらがな・カタカナ・食品番号のどれでも引けます"
+          hint={
+            category
+              ? `「${category}」の中から探します`
+              : 'ひらがな・カタカナ・食品番号のどれでも引けます'
+          }
         />
 
-        {query.trim() === '' ? (
-          <Note>
-            日本食品標準成分表（八訂）増補2023年から、筋トレでよく使う300食品を収録しています。
-          </Note>
-        ) : results.length === 0 ? (
-          <EmptyState>「{query}」に一致する食品がありません。</EmptyState>
+        {isSearching ? (
+          results.length > 0 ? (
+            <>
+              <FoodList foods={results} selectedId={selectedId} onSelect={setSelectedId} />
+              <p className="foodlist__meta">
+                {category && `${category}の中から `}
+                {results.length}件を表示（100gあたり）
+                {results.length === RESULT_LIMIT && ' — 絞り込むと残りも出ます'}
+              </p>
+            </>
+          ) : (
+            <>
+              <EmptyState>
+                {category
+                  ? `「${category}」の中に「${query}」に一致する食品がありません。`
+                  : `「${query}」に一致する食品がありません。`}
+              </EmptyState>
+              {/* カテゴリで絞ったせいで0件になった場合の逃げ道 */}
+              {wholeDbHits > 0 && (
+                <button type="button" className="linkbutton" onClick={() => setCategory(null)}>
+                  すべてのカテゴリから「{query}」を検索する
+                </button>
+              )}
+            </>
+          )
+        ) : category ? (
+          <>
+            <button type="button" className="linkbutton" onClick={() => setCategory(null)}>
+              ‹ カテゴリ一覧に戻る
+            </button>
+            <h3 className="food__cathead">
+              <FoodEmoji emoji={currentCategory?.emoji ?? null} />
+              <span>{category}</span>
+              <small>{categoryFoods.length}件</small>
+            </h3>
+            <FoodList foods={categoryFoods} selectedId={selectedId} onSelect={setSelectedId} />
+          </>
         ) : (
           <>
-            <ul className="foodlist">
-              {results.map((food) => (
-                <li key={food.id}>
-                  <button
-                    type="button"
-                    className={`foodrow${food.id === selectedId ? ' is-active' : ''}`}
-                    aria-pressed={food.id === selectedId}
-                    onClick={() => setSelectedId(food.id)}
-                  >
-                    <FoodEmoji food={food} />
-                    <span className="foodrow__body">
-                      <span className="foodrow__name">{food.name}</span>
-                      <span className="foodrow__macro">
-                        P {fmt(food.protein, 1)} / F {fmt(food.fat, 1)} / C {fmt(food.carbs, 1)}
-                      </span>
+            <span className="field__label">カテゴリから選ぶ</span>
+            <ul className="catlist">
+              {categories.map((c) => (
+                <li key={c.name}>
+                  <button type="button" className="catrow" onClick={() => setCategory(c.name)}>
+                    <FoodEmoji emoji={c.emoji} />
+                    <span className="catrow__name">{c.name}</span>
+                    <span className="catrow__count">
+                      {c.count}
+                      <small>件</small>
                     </span>
-                    <span className="foodrow__kcal">
-                      {fmtComma(food.kcal)}
-                      <small>kcal</small>
+                    <span className="catrow__chevron" aria-hidden="true">
+                      ›
                     </span>
                   </button>
                 </li>
               ))}
             </ul>
-            <p className="foodlist__meta">
-              {results.length}件を表示（100gあたり）
-              {results.length === RESULT_LIMIT && ' — 絞り込むと残りも出ます'}
-            </p>
+            <Note>
+              日本食品標準成分表（八訂）増補2023年から、筋トレでよく使う300食品を収録しています。
+            </Note>
           </>
         )}
       </Panel>
@@ -138,7 +222,7 @@ export function FoodTool() {
           action={<CopyButton text={copyText} label="内容をコピー" />}
         >
           <h3 className="food__title">
-            <FoodEmoji food={selected} />
+            <FoodEmoji emoji={selected.emoji} />
             <span>{selected.name}</span>
           </h3>
 
