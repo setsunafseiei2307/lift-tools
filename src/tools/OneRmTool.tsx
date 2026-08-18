@@ -82,6 +82,7 @@ export function OneRmTool() {
           label="重量の丸め"
           value={increment}
           onChange={setIncrement}
+          hint="計算結果をこの刻みに合わせます。107.3kgのような重量はプレートで作れないためです。"
           options={[
             { value: 0, label: '丸めない' },
             { value: 1.25, label: '1.25kg' },

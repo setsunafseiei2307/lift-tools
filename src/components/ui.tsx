@@ -151,6 +151,8 @@ interface SegmentedProps<T extends string | number> {
    * 入りきらない幅では折り返す。長いラベルを持つグループだけ大きめの値を渡す。
    */
   minItemWidth?: number;
+  /** 選択肢の下に出す補足。何のための設定かが自明でないときに使う */
+  hint?: string;
 }
 
 export function Segmented<T extends string | number>({
@@ -159,6 +161,7 @@ export function Segmented<T extends string | number>({
   options,
   onChange,
   minItemWidth,
+  hint,
 }: SegmentedProps<T>) {
   return (
     <div className="segmented">
@@ -183,6 +186,7 @@ export function Segmented<T extends string | number>({
           </button>
         ))}
       </div>
+      {hint && <p className="field__hint">{hint}</p>}
     </div>
   );
 }
@@ -228,6 +232,11 @@ export function EmptyState({ children }: { children: ReactNode }) {
 
 export function Note({ children }: { children: ReactNode }) {
   return <p className="note">{children}</p>;
+}
+
+/** その画面が何をする機能なのかを、本文の先頭で一度だけ説明する枠 */
+export function Callout({ children }: { children: ReactNode }) {
+  return <p className="callout">{children}</p>;
 }
 
 export function Warning({ items }: { items: string[] }) {

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { NumberField, Segmented, Panel, CopyButton, Note, Warning } from '../components/ui';
+import { NumberField, Segmented, Panel, CopyButton, Note, Warning, Callout } from '../components/ui';
 import { Barbell } from '../components/Barbell';
 import {
   BAR_OPTIONS,
@@ -61,6 +61,10 @@ export function PlateTool() {
   return (
     <div className="tool">
       <Panel title="組みたい重量" accent="var(--red)">
+        <Callout>
+          目標の重量にするために、バーの片側へ付けるプレートを出します。左右対称に付ける前提で、
+          枚数がいちばん少なくなる組み合わせを選びます。
+        </Callout>
         <Segmented
           label="単位"
           value={unit}

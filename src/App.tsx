@@ -12,7 +12,7 @@ type ToolKey = '1rm' | 'rpe' | 'plate' | 'smolov' | 'pfc' | 'food';
 const TOOLS: { key: ToolKey; label: string; sub: string; color: string }[] = [
   { key: '1rm', label: '1RM換算', sub: '重量×回数から最大重量', color: 'var(--blue)' },
   { key: 'rpe', label: 'RPE換算', sub: '主観強度から重量を決める', color: 'var(--green)' },
-  { key: 'plate', label: 'プレート', sub: '片側に何を載せるか', color: 'var(--red)' },
+  { key: 'plate', label: 'プレート', sub: 'バーに何をつければいいか計算します', color: 'var(--red)' },
   { key: 'smolov', label: 'Smolov', sub: '4週プログラム生成', color: 'var(--yellow)' },
   { key: 'pfc', label: 'PFC・カロリー', sub: '摂取量と三大栄養素', color: 'var(--green)' },
   { key: 'food', label: '食品検索', sub: '食品ごとのカロリーとPFC', color: 'var(--blue)' },
